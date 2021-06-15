@@ -1,0 +1,5 @@
+
+#define MQTT_SERVER "mqtt.beebotte.com"
+#define MQTT_USERNAME "token:token_ABCDEF0123456789"
+#define MQTT_PASSWORD ""
+#define MQTT_TOPIC "Channel/Resource"
