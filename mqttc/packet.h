@@ -34,6 +34,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string>
+#include <vector>
 
 #define PROTOCOL_MAGIC "MQIsdp"
 
@@ -85,32 +87,19 @@
 #define MAX_PAYLOAD_SIZE 268435455
 
 int _encode_remaining_length(char *buf, int length);
-
 int _decode_remaining_length(char **buf, int *count);
-
 void _write_header(char **pptr, uint8_t header);
-
 uint8_t _read_header(char **pptr);
-
 void _write_remaining_length(char **ptr, char *bytes, int count);
-
 void _write_char(char **pptr, char c);
-
 char _read_char(char** pptr);
-
 void _write_int(char **pptr, int i);
-
 int _read_int(char** pptr);
-
-void _write_string(char **pptr, const char *string);
-
-char *_read_string(char** pptr);
-
+void _write_string(char **pptr, std::string const &string);
+std::string _read_string(char **pptr);
 void _write_string_len(char **pptr, const char *string, int len);
-
-char *_read_string_len(char **pptr, int *len);
-
-void _write_payload(char **pptr, const char *payload, int length);
+std::string _read_string_len(char **pptr);
+void _write_payload(char **pptr, const std::vector<char> &payload);
 
 #endif /* __MQTT_PACKET_H */
 

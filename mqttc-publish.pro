@@ -14,8 +14,8 @@ HEADERS += \
 	mqttserver.h
 
 SOURCES += \
-	mqttc/anet.c \
-	mqttc/client.c \
-	mqttc/publish.c \
-	mqttc/mqtt.c \
-	mqttc/packet.c
+    mqttc/anet.cpp \
+	mqttc/client.cpp \
+	mqttc/mqtt.cpp \
+    mqttc/packet.cpp \
+    mqttc/publish.cpp

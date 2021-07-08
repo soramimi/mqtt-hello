@@ -127,15 +127,14 @@ int _read_int(char** pptr)
 /*
  * write and read string
  */
-void _write_string(char **pptr, const char *string)
+void _write_string(char **pptr, std::string const &string)
 {
-	_write_string_len(pptr, string, strlen(string));
+	_write_string_len(pptr, string.c_str(), string.size());
 }
 
-char *_read_string(char **pptr)
+std::string _read_string(char **pptr)
 {
-	int len = 0;
-	return _read_string_len(pptr, &len);
+	return _read_string_len(pptr);
 }
 
 /*
@@ -148,23 +147,23 @@ void _write_string_len(char **pptr, const char *string, int len)
 	*pptr += len;
 }
 
-char *_read_string_len(char **pptr, int *len)
+std::string _read_string_len(char **pptr)
 {
-	char *string = NULL;
-	*len = _read_int(pptr);
-	string = malloc(*len + 1);
-	memcpy(string, *pptr, *len);
-	string[*len] = '\0';
-	*pptr += *len;
-	return string;
+	int len = _read_int(pptr);
+	char *s = (char *)alloca(len + 1);
+	memcpy(s, *pptr, len);
+	s[len] = '\0';
+	*pptr += len;
+	return s;
 }
 
 /*
  * write payload
  */
-void _write_payload(char **pptr, const char *payload, int length)
+void _write_payload(char **pptr, std::vector<char> const &payload)
 {
-	memcpy(*pptr, payload, length);
+	auto length = payload.size();
+	memcpy(*pptr, payload.data(), length);
 	*pptr += length;
 }
 

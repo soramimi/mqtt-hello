@@ -13,8 +13,8 @@ HEADERS += \
 	mqttc/client.h
 
 SOURCES += \
-	mqttc/anet.c \
-	mqttc/subscribe.c \
-	mqttc/mqtt.c \
-	mqttc/packet.c \
-	mqttc/client.c
+	mqttc/anet.cpp \
+	mqttc/client.cpp \
+	mqttc/mqtt.cpp \
+	mqttc/packet.cpp \
+	mqttc/subscribe.cpp

@@ -37,7 +37,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <memory>
+#include <vector>
 
 #define MQTT_OK 0
 #define MQTT_ERR -1
@@ -59,179 +60,147 @@
 /*
  * MQTT ConnAck
  */
-typedef enum {
+enum ConnAck {
 	CONNACK_ACCEPT  = 0,
 	CONNACK_PROTO_VER, 
 	CONNACK_INVALID_ID,
 	CONNACK_SERVER,
 	CONNACK_CREDENTIALS,
 	CONNACK_AUTH
-} ConnAck;
+};
 
 /*
  * MQTT State
  */
-typedef enum {
+enum MqttState {
 	MQTT_STATE_INIT = 0,
 	MQTT_STATE_CONNECTING,
 	MQTT_STATE_CONNECTED,
 	MQTT_STATE_DISCONNECTED
-} MqttState;
+};
 
 /*
  * MQTT Will
  */
-typedef struct {
+struct MqttWill {
 	bool retain;
 	uint8_t qos;
-	const char *topic;
-	const char *msg;
-} MqttWill;
+	std::string topic;
+	std::string msg;
+};
 
 /*
  * MQTT Message
  */
-typedef struct {
-	uint16_t id;
-	uint8_t qos;
-	bool retain;
-	bool dup;
-	const char *topic;
-	int payloadlen;
-	const char *payload;
-} MqttMsg;
-
-typedef struct _Mqtt Mqtt;
-
-typedef void (*MqttCallback)(Mqtt *mqtt, void *data, int id);
-
-typedef void (*MqttMsgCallback)(Mqtt *mqtt, MqttMsg *message);
-
-struct _Mqtt {
-
-//	aeEventLoop *el;
-
-    int fd; //socket
-
-	uint8_t state;
-
-    int error;
-
-	char errstr[1024];
-
-    char *server;
-
-    const char *username;
-
-    const char *password;
-
-	const char *clientid;
-
-    int port;
-
-    int retries;
-
-	int msgid;
-
-	bool cleansess;
-
-    /* keep alive */
-
-	unsigned int keepalive;
-
-	long long keepalive_timer;
-
-	long long keepalive_timeout_timer;
-
-    void *userdata;
-
-	MqttWill *will;
-
-	MqttCallback callbacks[16];
-
-	MqttMsgCallback msgcallback;
-
-	bool shutdown_asap;
-
+struct MqttMsg {
+	uint16_t id = 0;
+	uint8_t qos = 0;
+	bool retain = false;
+	bool dup = false;
+	std::string topic;
+	std::vector<char> payload;
 };
 
-char *mqtt_packet_name(int type);
+class Mqtt {
+public:
+	Mqtt()
+	{
+	}
 
-Mqtt *mqtt_new();
+	~Mqtt()
+	{
+		close();
+	}
 
-void mqtt_set_clientid(Mqtt *mqtt, const char *clientid);
+	void close();
 
-void mqtt_set_username(Mqtt *mqtt, const char *username);
+	typedef void (*MqttCallback)(Mqtt *mqtt, void *data, int id);
+	typedef void (*MqttMsgCallback)(Mqtt *mqtt, MqttMsg *message);
 
-void mqtt_set_passwd(Mqtt *mqtt, const char *passwd);
+	int fd = -1; //socket
+	uint8_t state = 0;
+	int error = 0;
+	char errstr[1024];
+	std::string server;
+	std::string username;
+	std::string password;
+	std::string clientid;
+	int port = 0;
+	int retries = 0;
+	int msgid = 0;
+	bool cleansess = false;
 
-void mqtt_set_server(Mqtt *mqtt, const char *server);
+    /* keep alive */
+	unsigned int keepalive = 0;
+	long long keepalive_timer = 0;
+	long long keepalive_timeout_timer = 0;
 
-void mqtt_set_port(Mqtt *mqtt, int port);
+	std::shared_ptr<MqttWill> will;
+	MqttCallback callbacks[16];
+	MqttMsgCallback msgcallback = nullptr;
+	bool shutdown_asap = false;
+	int connack = 0;
 
-void mqtt_set_retries(Mqtt *mqtt, int retries);
+	void *userdata = nullptr;
 
-void mqtt_set_will(Mqtt *mqtt, MqttWill *will); 
+	void mqtt_read(int fd, int mask);
 
-void mqtt_clear_will(Mqtt *mqtt);
+	void mqtt_set_clientid(const std::string &clientid);
+	void mqtt_set_username(const std::string &username);
+	void mqtt_set_passwd(const std::string &passwd);
+	void mqtt_set_server(const std::string &server);
+	void mqtt_set_port(int port);
+	void mqtt_set_retries(int retries);
+	void mqtt_set_cleansess(bool cleansess);
+	void mqtt_set_will(const std::shared_ptr<MqttWill> &will);
+	void mqtt_clear_will();
+	void mqtt_set_keepalive(int keepalive);
+	void mqtt_set_callback(uint8_t type, MqttCallback callback);
+	void mqtt_clear_callback(uint8_t type);
+	void mqtt_set_msg_callback(MqttMsgCallback callback);
+	void mqtt_clear_msg_callback();
+	int mqtt_connect();
+	int mqtt_publish(MqttMsg *msg);
+	void mqtt_puback(int msgid);
+	void mqtt_pubrec(int msgid);
+	void mqtt_pubrel(int msgid);
+	void mqtt_pubcomp(int msgid);
+	int mqtt_subscribe(const char *topic, unsigned char qos);
+	int mqtt_unsubscribe(const std::string &topic);
+	void mqtt_ping();
+	void mqtt_disconnect();
+	void mqtt_release();
+	void mqtt_set_state(int state);
+	static const char *mqtt_msg_name(uint8_t type);
+private:
+	static int _mqtt_keepalive(long long id, void *clientdata);
+	void _mqtt_handle_publish(MqttMsg *msg);
+	void _mqtt_handle_packet(uint8_t header, char *buffer, int buflen);
+	void _mqtt_reader_feed(char *buffer, int len);
+	void _mqtt_handle_puback(int type, int msgid);
+	void _mqtt_handle_suback(int msgid, int qos);
+	void _mqtt_handle_unsuback(int msgid);
+	void _mqtt_handle_pingresp();
+	void _mqtt_send_publish(MqttMsg *msg);
+	void _mqtt_send_ack(int type, int msgid);
+	void _mqtt_send_connect();
+	void _mqtt_callback(int type, void *data, int id);
+	void _mqtt_send_ping();
+	void _mqtt_handle_connack(int rc);
+	void _mqtt_send_unsubscribe(int msgid, const std::string &topic);
+	void _mqtt_handle_publish(uint8_t header, char *buffer, int buflen);
+};
 
-void mqtt_set_keepalive(Mqtt *mqtt, int keepalive);
+std::shared_ptr<Mqtt> mqtt_new();
 
-void mqtt_set_callback(Mqtt *mqtt, uint8_t type, MqttCallback callback); 
-
-void mqtt_clear_callback(Mqtt *mqtt, uint8_t type);
-
-void mqtt_set_msg_callback(Mqtt *mqtt, MqttMsgCallback callback);
-
-void mqtt_clear_msg_callback(Mqtt *mqtt);
-
-//MQTT CONNECT
-int mqtt_connect(Mqtt *mqtt);
-
-//MQTT PUBLISH
-int mqtt_publish(Mqtt *mqtt, MqttMsg *msg);
-
-//PUBACK for QOS1, QOS2 
-void mqtt_puback(Mqtt *mqtt, int msgid);
-
-//PUBREC for QOS_2
-void mqtt_pubrec(Mqtt *mqtt, int msgid);
-
-//PUBREL for QOS_2
-void mqtt_pubrel(Mqtt *mqtt, int msgid);
-
-//PUBCOMP for QOS_2
-void mqtt_pubcomp(Mqtt *mqtt, int msgid);
-
-//SUBSCRIBE
-int mqtt_subscribe(Mqtt *mqtt, const char *topic, uint8_t qos);
-
-//UNSUBSCRIBE
-int mqtt_unsubscribe(Mqtt *mqtt, const char *topic);
-
-//PINGREQ
-void mqtt_ping(Mqtt *mqtt);
-
-//DISCONNECT
-void mqtt_disconnect(Mqtt *mqtt);
-
-//RUN Loop
-void mqtt_run(Mqtt *mqtt);
-
-//RELEASE
-void mqtt_release(Mqtt *mqtt);
 
 //Will create and release
-MqttWill *mqtt_will_new(char *topic, char *msg, bool retain, uint8_t qos);
-
-void mqtt_will_release(MqttWill *will);
+std::shared_ptr<MqttWill> mqtt_will_new(const std::string &topic, const std::string &msg, bool retain, uint8_t qos);
 
 //Message create and release
-MqttMsg * mqtt_msg_new(int msgid, int qos, bool retain, bool dup, char *topic, int payloadlen, char *payload);
+void mqtt_msg_new(MqttMsg *msg, int msgid, int qos, bool retain, bool dup, const std::string &topic, char const *ptr, size_t len);
 
-const char *mqtt_msg_name(uint8_t type);
 
-void mqtt_msg_free(MqttMsg *msg);
 
 #endif /* __MQTT_H__ */
 

@@ -36,10 +36,14 @@
 #include <stdbool.h>
 #include "mqtt.h"
 
-typedef struct _Client {
-//	aeEventLoop *el;
-	Mqtt *mqtt;
+class Client {
+public:
+	std::shared_ptr<Mqtt> mqtt;
 	bool shutdown_asap;
-} Client;
+
+
+	void init();
+	void set_callbacks();
+};
 
 #endif

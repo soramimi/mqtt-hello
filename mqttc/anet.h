@@ -31,6 +31,8 @@
 #ifndef __ANET_H
 #define __ANET_H
 
+#include <sys/stat.h>
+
 #define ANET_OK 0
 #define ANET_ERR -1
 #define ANET_ERR_LEN 256
@@ -44,7 +46,7 @@ int anetTcpNonBlockConnect(char *err, char *addr, int port);
 int anetUnixConnect(char *err, char *path);
 int anetUnixNonBlockConnect(char *err, char *path);
 int anetRead(int fd, char *buf, int count);
-int anetResolve(char *err, char *host, char *ipbuf);
+int anetResolve(char *err, const char *host, char *ipbuf);
 int anetTcpServer(char *err, int port, char *bindaddr);
 int anetUnixServer(char *err, char *path, mode_t perm);
 int anetTcpAccept(char *err, int serversock, char *ip, int *port);
