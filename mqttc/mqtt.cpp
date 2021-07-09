@@ -516,6 +516,7 @@ void Mqtt::_mqtt_handle_publish(uint8_t header, char *buffer, int buflen)
 	std::string topic = _read_string_len(&buffer);
 	int payloadlen = buflen;
 	payloadlen -= 2;
+	payloadlen -= topic.size();
 	if (qos > 0) {
 		msgid = _read_int(&buffer);
 		payloadlen -= 2;
