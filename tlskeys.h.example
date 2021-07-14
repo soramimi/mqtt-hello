@@ -1,0 +1,6 @@
+#define MQTT_SERVER "aaaaaaaaaaaaaa-aaa.iot.us-west-2.amazonaws.com"
+#define MQTT_PORT 8883
+#define MQTT_TOPIC "hoge/fuga"
+#define cafile  "/home/soramimi/a/AmazonRootCA1.pem"
+#define crtfile "/home/soramimi/a/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-certificate.pem.crt"
+#define keyfile "/home/soramimi/a/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-private.pem.key"
